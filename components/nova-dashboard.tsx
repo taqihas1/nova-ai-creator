@@ -31,7 +31,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Project = {
   id: string;
@@ -99,6 +99,7 @@ const nav = [
   ["Projects", FileText],
   ["Executive Team", UsersRound],
   ["Campaigns", Rocket],
+  ["Mission Center", Activity],
   ["Deliverables", CheckCircle2],
   ["Model Lab", BrainCircuit],
   ["Analytics", BarChart3],
@@ -116,8 +117,17 @@ export function NovaDashboard() {
   const [selectedChannels, setSelectedChannels] = useState(channels);
   const [selectedModel, setSelectedModel] = useState("Auto");
   const [submitted, setSubmitted] = useState(false);
+  const [missionActive, setMissionActive] = useState(false);
+  const [missionStep, setMissionStep] = useState(0);
+  const [missionPaused, setMissionPaused] = useState(false);
 
   const project = useMemo(() => projects.find((item) => item.id === projectId) ?? projects[0], [projectId]);
+
+  useEffect(() => {
+    if (!missionActive || missionPaused || missionStep >= 5) return;
+    const timer = window.setTimeout(() => setMissionStep((current) => current + 1), 1800);
+    return () => window.clearTimeout(timer);
+  }, [missionActive, missionPaused, missionStep]);
 
   function toggleChannel(channel: string) {
     setSelectedChannels((current) =>
@@ -127,6 +137,10 @@ export function NovaDashboard() {
 
   function assignCampaign() {
     if (!assignment.trim() || selectedChannels.length === 0) return;
+    setMissionStep(0);
+    setMissionPaused(false);
+    setMissionActive(true);
+    setActive("Mission Center");
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3500);
   }
@@ -245,7 +259,7 @@ export function NovaDashboard() {
                     </div>
                     <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
                       <button onClick={() => setActive("Model Lab")} className="flex items-center gap-2 text-left text-xs font-bold text-slate-600"><BrainCircuit size={16} className="text-indigo-600" /> Model routing: <span className="text-indigo-700">{selectedModel}</span></button>
-                      <button onClick={assignCampaign} className="flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg shadow-slate-200 hover:-translate-y-0.5"><Rocket size={16} /> Assign to team</button>
+                      <button onClick={assignCampaign} className="flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg shadow-slate-200 hover:-translate-y-0.5"><Rocket size={16} /> Start mission</button>
                     </div>
                   </div>
 
@@ -270,6 +284,7 @@ export function NovaDashboard() {
             {active === "Projects" && <ProjectsView projectId={projectId} setProjectId={setProjectId} />}
             {active === "Executive Team" && <TeamView />}
             {active === "Campaigns" && <CampaignsView />}
+            {active === "Mission Center" && <MissionView assignment={assignment} channels={selectedChannels} step={missionStep} paused={missionPaused} onPause={() => setMissionPaused((value) => !value)} onRestart={() => { setMissionStep(0); setMissionPaused(false); setMissionActive(true); }} />}
             {active === "Deliverables" && <DeliverablesView />}
             {active === "Model Lab" && <ModelLab selectedModel={selectedModel} setSelectedModel={setSelectedModel} />}
             {active === "Analytics" && <AnalyticsView />}
@@ -286,7 +301,7 @@ export function NovaDashboard() {
         </div>
       )}
 
-      {submitted && <div className="fixed bottom-6 right-6 z-[90] flex max-w-sm items-start gap-3 rounded-2xl bg-slate-950 p-4 text-white shadow-2xl"><div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500"><CheckCircle2 size={18}/></div><div><div className="text-sm font-black">Assignment accepted</div><div className="mt-1 text-xs leading-5 text-slate-300">The Chief Content Officer is coordinating {selectedChannels.length} channel deliverables.</div></div></div>}
+      {submitted && <div className="fixed bottom-6 right-6 z-[90] flex max-w-sm items-start gap-3 rounded-2xl bg-slate-950 p-4 text-white shadow-2xl"><div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500"><CheckCircle2 size={18}/></div><div><div className="text-sm font-black">Assignment accepted</div><div className="mt-1 text-xs leading-5 text-slate-300">The Chief Content Officer started a coordinated mission across {selectedChannels.length} channels.</div></div></div>}
     </main>
   );
 }
@@ -305,6 +320,34 @@ function TeamView() {
 
 function CampaignsView() {
   return <div><PageIntro eyebrow="Campaign orchestration" title="From one goal to every channel" copy="Campaigns keep strategy, tasks, approvals and channel deliverables coordinated across the executive team." action="New campaign"/><div className="space-y-4">{[["Nova positioning launch","In production","5 channels","72%"],["Creator workflow education series","Strategy","3 channels","34%"],["Founder story campaign","Ready for review","4 channels","100%"]].map(([name,status,scope,progress]) => <article key={name} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-col gap-4 md:flex-row md:items-center"><div className="grid h-12 w-12 place-items-center rounded-2xl bg-indigo-50 text-indigo-700"><Rocket size={20}/></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-black">{name}</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{status}</span></div><div className="mt-2 text-xs text-slate-500">{scope} · Coordinated by Chief Content Officer</div><div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-500" style={{width:progress}}/></div></div><div className="text-sm font-black text-indigo-700">{progress}</div><button className="rounded-xl border border-slate-200 p-2"><ChevronRight size={17}/></button></div></article>)}</div></div>;
+}
+
+function MissionView({ assignment, channels, step, paused, onPause, onRestart }: { assignment: string; channels: string[]; step: number; paused: boolean; onPause: () => void; onRestart: () => void }) {
+  const stages = [
+    ["Research Director", "Scanning audience, trends and competitor signals", Search],
+    ["Content Strategist", "Building the campaign architecture and channel briefs", BrainCircuit],
+    ["Copy Director", "Drafting the core narrative and platform variations", MessageSquareText],
+    ["Design & Video Directors", "Creating visual concepts, hooks and production notes", Video],
+    ["Publishing Manager", "Preparing approvals, timing and distribution plan", CalendarDays],
+  ] as const;
+  const complete = step >= stages.length;
+  return <div>
+    <PageIntro eyebrow="Live orchestration" title="Mission Center" copy="Watch the executive team coordinate work, hand off context and prepare finished deliverables for your approval." />
+    <div className="grid gap-5 xl:grid-cols-[1.25fr_.75fr]">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-7">
+        <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 md:flex-row md:items-start md:justify-between">
+          <div><div className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">Active mission</div><h3 className="mt-2 max-w-3xl text-2xl font-black tracking-tight">{assignment}</h3><div className="mt-3 flex flex-wrap gap-2">{channels.map((channel) => <span key={channel} className="rounded-full bg-indigo-50 px-3 py-1.5 text-[11px] font-black text-indigo-700">{channel}</span>)}</div></div>
+          <div className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-black ${complete ? "bg-emerald-50 text-emerald-700" : paused ? "bg-amber-50 text-amber-700" : "bg-indigo-50 text-indigo-700"}`}>{complete ? "READY FOR REVIEW" : paused ? "PAUSED" : "IN PROGRESS"}</div>
+        </div>
+        <div className="mt-6 space-y-3">{stages.map(([name, task, Icon], index) => { const done = step > index; const working = step === index && !complete; return <div key={name} className={`rounded-2xl border p-4 transition ${working ? "border-indigo-300 bg-indigo-50 ring-4 ring-indigo-50" : done ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200 bg-slate-50/60"}`}><div className="flex items-center gap-4"><div className={`grid h-11 w-11 place-items-center rounded-2xl ${done ? "bg-emerald-500 text-white" : working ? "bg-indigo-600 text-white" : "bg-white text-slate-400"}`}>{done ? <CheckCircle2 size={20}/> : <Icon size={19}/>}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h4 className="font-black">{name}</h4>{working && <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[9px] font-black text-white">WORKING</span>}</div><p className="mt-1 text-xs leading-5 text-slate-600">{task}</p>{working && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-indigo-100"><div className="h-full w-2/3 animate-pulse rounded-full bg-indigo-600"/></div>}</div><div className="text-[10px] font-bold text-slate-400">{done ? "Complete" : working ? "Now" : "Queued"}</div></div></div>})}</div>
+        <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-100 pt-5"><button onClick={onPause} disabled={complete} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-black disabled:opacity-40">{paused ? "Resume mission" : "Pause mission"}</button><button onClick={onRestart} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-black">Restart demo</button>{complete && <button className="rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-black text-white">Review deliverables</button>}</div>
+      </section>
+      <aside className="space-y-5">
+        <div className="rounded-3xl bg-[#18233d] p-6 text-white shadow-xl"><div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-300">Chief Content Officer</div><h3 className="mt-2 text-xl font-black">Executive summary</h3><p className="mt-3 text-sm leading-6 text-slate-300">{complete ? "The mission is complete. Five coordinated deliverables are ready for your review and approval." : paused ? "The mission is paused. All executive context has been preserved." : `Stage ${Math.min(step + 1, 5)} of 5 is underway. Nova is passing shared project context between executives automatically.`}</p><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white/8 p-3"><div className="text-2xl font-black">{Math.min(step,5)}/5</div><div className="text-[10px] text-slate-300">Stages complete</div></div><div className="rounded-xl bg-white/8 p-3"><div className="text-2xl font-black">{channels.length}</div><div className="text-[10px] text-slate-300">Channels</div></div></div></div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">Model routing</div><h3 className="mt-1 text-lg font-black">Auto orchestration</h3><div className="mt-4 space-y-3 text-xs text-slate-600">{["Research → large-context model","Strategy → reasoning model","Copy → editorial model","Social → fast creative model"].map((item) => <div key={item} className="flex items-center gap-2 rounded-xl bg-slate-50 p-3"><BrainCircuit size={15} className="text-indigo-600"/>{item}</div>)}</div></div>
+      </aside>
+    </div>
+  </div>;
 }
 
 function DeliverablesView() {

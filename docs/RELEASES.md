@@ -1,3 +1,13 @@
+# Releases
+
+## v0.3.0 — Mission Control
+
+- Added a live Mission Center with staged executive orchestration.
+- Assignments now launch a visible five-stage content workflow.
+- Added pause, resume, restart, completion, and executive summary states.
+- Added task-to-model routing visibility.
+- Renamed the primary assignment action to **Start mission**.
+
 # Release Notes
 
 ## v0.2.0 — Executive Team Foundation
