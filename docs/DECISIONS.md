@@ -17,3 +17,7 @@ The product is organized around coordinated executive teams that own outcomes, d
 **Status:** Adopted
 
 Product features and executives never call providers directly. All model use passes through Nova’s provider-neutral model gateway.
+
+## ADR-004: Mission orchestration is Nova's core experience
+
+Nova presents AI work as coordinated executive stages rather than a single chat response. Each stage must expose ownership, status, handoff context, and a tangible output. Mock orchestration in v0.4 is intentionally isolated so real model and persistence services can replace it later.

@@ -39,3 +39,12 @@
 - Secure provider credentials
 - Campaign orchestration API
 - Deliverable review and approval workflow
+
+## v0.4.0 — Mission Orchestration
+
+- Rebuilt Mission Center around a seven-stage executive workflow.
+- Added animated mission progress, pause/resume, and restart controls.
+- Added visible executive handoffs and a live collaboration timeline.
+- Added progressive deliverables that appear as stages complete.
+- Added task-aware model routing visibility and a mission review state.
+- Refined the Mission Center for responsive desktop and mobile layouts.

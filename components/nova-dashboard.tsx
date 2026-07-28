@@ -9,6 +9,7 @@ import {
   BrainCircuit,
   BriefcaseBusiness,
   CalendarDays,
+  Clock3,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -20,6 +21,9 @@ import {
   Menu,
   MessageSquareText,
   MoreHorizontal,
+  Pause,
+  Play,
+  RotateCcw,
   Plus,
   Rocket,
   Search,
@@ -124,7 +128,7 @@ export function NovaDashboard() {
   const project = useMemo(() => projects.find((item) => item.id === projectId) ?? projects[0], [projectId]);
 
   useEffect(() => {
-    if (!missionActive || missionPaused || missionStep >= 5) return;
+    if (!missionActive || missionPaused || missionStep >= 7) return;
     const timer = window.setTimeout(() => setMissionStep((current) => current + 1), 1800);
     return () => window.clearTimeout(timer);
   }, [missionActive, missionPaused, missionStep]);
@@ -324,27 +328,66 @@ function CampaignsView() {
 
 function MissionView({ assignment, channels, step, paused, onPause, onRestart }: { assignment: string; channels: string[]; step: number; paused: boolean; onPause: () => void; onRestart: () => void }) {
   const stages = [
-    ["Research Director", "Scanning audience, trends and competitor signals", Search],
-    ["Content Strategist", "Building the campaign architecture and channel briefs", BrainCircuit],
-    ["Copy Director", "Drafting the core narrative and platform variations", MessageSquareText],
-    ["Design & Video Directors", "Creating visual concepts, hooks and production notes", Video],
-    ["Publishing Manager", "Preparing approvals, timing and distribution plan", CalendarDays],
+    { phase: "Mission accepted", executive: "Chief Content Officer", task: "Clarifying the outcome, success criteria and channel scope", icon: BriefcaseBusiness, output: "Mission charter" },
+    { phase: "Research", executive: "Research Director", task: "Scanning audience, competitors and current trend signals", icon: Search, output: "Audience intelligence brief" },
+    { phase: "Strategy", executive: "Content Strategist", task: "Turning research into campaign architecture and channel briefs", icon: BrainCircuit, output: "Campaign strategy" },
+    { phase: "Narrative", executive: "Copy Director", task: "Creating the core story, hooks and platform-native copy", icon: MessageSquareText, output: "Core narrative and copy" },
+    { phase: "Creative production", executive: "Design & Video Directors", task: "Producing visual concepts, scripts and production guidance", icon: Video, output: "Creative production pack" },
+    { phase: "Executive review", executive: "Chief Content Officer", task: "Checking strategic consistency, quality and brand alignment", icon: CheckCircle2, output: "Executive quality review" },
+    { phase: "Publishing ready", executive: "Publishing Manager", task: "Preparing approvals, sequence and distribution schedule", icon: CalendarDays, output: "Publishing plan" },
   ] as const;
   const complete = step >= stages.length;
+  const safeStep = Math.min(step, stages.length);
+  const progress = Math.round((safeStep / stages.length) * 100);
+  const visibleEvents = stages.slice(0, Math.min(step + 1, stages.length));
+  const deliverables = stages.filter((_, index) => step > index);
+
   return <div>
-    <PageIntro eyebrow="Live orchestration" title="Mission Center" copy="Watch the executive team coordinate work, hand off context and prepare finished deliverables for your approval." />
-    <div className="grid gap-5 xl:grid-cols-[1.25fr_.75fr]">
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-7">
-        <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 md:flex-row md:items-start md:justify-between">
-          <div><div className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">Active mission</div><h3 className="mt-2 max-w-3xl text-2xl font-black tracking-tight">{assignment}</h3><div className="mt-3 flex flex-wrap gap-2">{channels.map((channel) => <span key={channel} className="rounded-full bg-indigo-50 px-3 py-1.5 text-[11px] font-black text-indigo-700">{channel}</span>)}</div></div>
-          <div className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-black ${complete ? "bg-emerald-50 text-emerald-700" : paused ? "bg-amber-50 text-amber-700" : "bg-indigo-50 text-indigo-700"}`}>{complete ? "READY FOR REVIEW" : paused ? "PAUSED" : "IN PROGRESS"}</div>
+    <PageIntro eyebrow="Live mission orchestration" title="Your AI company is at work" copy="Follow every handoff, see what each executive contributes and review deliverables as they are completed." />
+
+    <section className="mb-5 overflow-hidden rounded-[30px] bg-[#17223c] text-white shadow-2xl shadow-slate-300">
+      <div className="grid gap-6 p-6 md:p-8 xl:grid-cols-[1.25fr_.75fr] xl:items-center">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-3 py-1.5 text-[10px] font-black tracking-[.12em] ${complete ? "bg-emerald-400/15 text-emerald-300" : paused ? "bg-amber-400/15 text-amber-300" : "bg-cyan-400/15 text-cyan-300"}`}>{complete ? "MISSION COMPLETE" : paused ? "MISSION PAUSED" : "MISSION IN PROGRESS"}</span>
+            <span className="text-xs text-slate-400">Mission NVA-0042</span>
+          </div>
+          <h3 className="mt-4 max-w-4xl text-2xl font-black leading-tight tracking-[-.025em] md:text-4xl">{assignment}</h3>
+          <div className="mt-4 flex flex-wrap gap-2">{channels.map((channel) => <span key={channel} className="rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-[11px] font-bold text-slate-200">{channel}</span>)}</div>
         </div>
-        <div className="mt-6 space-y-3">{stages.map(([name, task, Icon], index) => { const done = step > index; const working = step === index && !complete; return <div key={name} className={`rounded-2xl border p-4 transition ${working ? "border-indigo-300 bg-indigo-50 ring-4 ring-indigo-50" : done ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200 bg-slate-50/60"}`}><div className="flex items-center gap-4"><div className={`grid h-11 w-11 place-items-center rounded-2xl ${done ? "bg-emerald-500 text-white" : working ? "bg-indigo-600 text-white" : "bg-white text-slate-400"}`}>{done ? <CheckCircle2 size={20}/> : <Icon size={19}/>}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h4 className="font-black">{name}</h4>{working && <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[9px] font-black text-white">WORKING</span>}</div><p className="mt-1 text-xs leading-5 text-slate-600">{task}</p>{working && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-indigo-100"><div className="h-full w-2/3 animate-pulse rounded-full bg-indigo-600"/></div>}</div><div className="text-[10px] font-bold text-slate-400">{done ? "Complete" : working ? "Now" : "Queued"}</div></div></div>})}</div>
-        <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-100 pt-5"><button onClick={onPause} disabled={complete} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-black disabled:opacity-40">{paused ? "Resume mission" : "Pause mission"}</button><button onClick={onRestart} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-black">Restart demo</button>{complete && <button className="rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-black text-white">Review deliverables</button>}</div>
+        <div className="rounded-2xl border border-white/10 bg-white/7 p-5">
+          <div className="flex items-end justify-between"><div><div className="text-xs font-black uppercase tracking-[.16em] text-cyan-300">Overall progress</div><div className="mt-2 text-4xl font-black">{progress}%</div></div><Activity className={!complete && !paused ? "animate-pulse text-cyan-300" : "text-slate-400"} size={26}/></div>
+          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-300 transition-all duration-700" style={{width:`${progress}%`}} /></div>
+          <div className="mt-4 flex items-center justify-between text-[11px] text-slate-300"><span>{safeStep} of {stages.length} stages complete</span><span>{deliverables.length} deliverables ready</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div className="grid gap-5 2xl:grid-cols-[1.15fr_.85fr]">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+        <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div><div className="text-xs font-black uppercase tracking-[.16em] text-indigo-600">Executive workflow</div><h3 className="mt-1 text-xl font-black">Mission stages and handoffs</h3></div>
+          <div className="flex gap-2"><button onClick={onPause} disabled={complete} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-black disabled:opacity-40">{paused ? <Play size={14}/> : <Pause size={14}/>} {paused ? "Resume" : "Pause"}</button><button onClick={onRestart} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-black"><RotateCcw size={14}/> Restart</button></div>
+        </div>
+        <div className="mt-5 space-y-3">{stages.map((stage, index) => { const done = step > index; const working = step === index && !complete; const queued = !done && !working; const Icon = stage.icon; return <article key={stage.phase} className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-500 ${working ? "border-indigo-300 bg-indigo-50 shadow-lg shadow-indigo-100 ring-4 ring-indigo-50" : done ? "border-emerald-200 bg-emerald-50/50" : "border-slate-200 bg-slate-50/50 opacity-75"}`}>
+          {working && <div className="absolute inset-y-0 left-0 w-1 bg-indigo-600"/>}
+          <div className="flex items-start gap-4"><div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${done ? "bg-emerald-500 text-white" : working ? "bg-indigo-600 text-white" : "bg-white text-slate-400"}`}>{done ? <CheckCircle2 size={20}/> : <Icon size={19}/>}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-[10px] font-black uppercase tracking-[.14em] text-slate-400">{String(index + 1).padStart(2,"0")} · {stage.phase}</span>{working && <span className="rounded-full bg-indigo-600 px-2 py-1 text-[9px] font-black text-white">WORKING NOW</span>}</div><h4 className="mt-1 font-black">{stage.executive}</h4><p className="mt-1 text-xs leading-5 text-slate-600">{stage.task}</p>{done && <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-[11px] font-bold text-emerald-700"><CheckCircle2 size={14}/> Delivered: {stage.output}</div>}{working && <div className="mt-3"><div className="flex justify-between text-[10px] font-bold text-indigo-700"><span>Processing shared project context</span><span>68%</span></div><div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-indigo-100"><div className="h-full w-2/3 animate-pulse rounded-full bg-indigo-600"/></div></div>}</div><div className="shrink-0 text-[10px] font-black text-slate-400">{done ? "COMPLETE" : working ? "NOW" : queued ? "QUEUED" : ""}</div></div>
+        </article>})}</div>
       </section>
+
       <aside className="space-y-5">
-        <div className="rounded-3xl bg-[#18233d] p-6 text-white shadow-xl"><div className="text-xs font-black uppercase tracking-[0.16em] text-cyan-300">Chief Content Officer</div><h3 className="mt-2 text-xl font-black">Executive summary</h3><p className="mt-3 text-sm leading-6 text-slate-300">{complete ? "The mission is complete. Five coordinated deliverables are ready for your review and approval." : paused ? "The mission is paused. All executive context has been preserved." : `Stage ${Math.min(step + 1, 5)} of 5 is underway. Nova is passing shared project context between executives automatically.`}</p><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white/8 p-3"><div className="text-2xl font-black">{Math.min(step,5)}/5</div><div className="text-[10px] text-slate-300">Stages complete</div></div><div className="rounded-xl bg-white/8 p-3"><div className="text-2xl font-black">{channels.length}</div><div className="text-[10px] text-slate-300">Channels</div></div></div></div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">Model routing</div><h3 className="mt-1 text-lg font-black">Auto orchestration</h3><div className="mt-4 space-y-3 text-xs text-slate-600">{["Research → large-context model","Strategy → reasoning model","Copy → editorial model","Social → fast creative model"].map((item) => <div key={item} className="flex items-center gap-2 rounded-xl bg-slate-50 p-3"><BrainCircuit size={15} className="text-indigo-600"/>{item}</div>)}</div></div>
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between"><div><div className="text-xs font-black uppercase tracking-[.16em] text-indigo-600">Live timeline</div><h3 className="mt-1 text-xl font-black">Executive collaboration</h3></div><Clock3 size={20} className="text-indigo-600"/></div>
+          <div className="mt-5 space-y-0">{visibleEvents.map((stage,index) => { const activeEvent = index === step && !complete; return <div key={stage.phase} className="relative flex gap-3 pb-5 last:pb-0"><div className="relative z-10 mt-1"><div className={`h-3 w-3 rounded-full ${activeEvent ? "animate-pulse bg-indigo-600 ring-4 ring-indigo-100" : "bg-emerald-500"}`}/>{index < visibleEvents.length-1 && <div className="absolute left-[5px] top-3 h-12 w-px bg-slate-200"/>}</div><div className="min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-black">{stage.executive}</span><span className="text-[10px] text-slate-400">{`14:${String(index * 2 + 1).padStart(2,"0")}`}</span></div><p className="mt-1 text-xs leading-5 text-slate-600">{activeEvent ? stage.task : `${stage.output} shared with the next executive.`}</p></div></div>})}</div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between"><div><div className="text-xs font-black uppercase tracking-[.16em] text-indigo-600">Deliverables</div><h3 className="mt-1 text-xl font-black">Appearing as work finishes</h3></div><FileText size={20} className="text-indigo-600"/></div>
+          <div className="mt-4 space-y-2">{deliverables.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center text-xs text-slate-500">The first deliverable will appear after the mission charter is complete.</div> : deliverables.map((stage,index) => <div key={stage.output} className="flex animate-[fadeIn_.45s_ease-out] items-center gap-3 rounded-xl bg-emerald-50 p-3"><div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500 text-white"><CheckCircle2 size={16}/></div><div className="min-w-0 flex-1"><div className="truncate text-xs font-black">{stage.output}</div><div className="text-[10px] text-emerald-700">Prepared by {stage.executive}</div></div><ChevronRight size={14} className="text-emerald-600"/></div>)}</div>
+          {complete && <button className="mt-4 w-full rounded-xl bg-slate-950 px-4 py-3 text-xs font-black text-white">Open review room</button>}
+        </section>
+
+        <section className="rounded-3xl bg-[#18233d] p-6 text-white shadow-xl"><div className="text-xs font-black uppercase tracking-[.16em] text-cyan-300">Nova Smart Router</div><h3 className="mt-1 text-lg font-black">Models selected by task</h3><div className="mt-4 grid grid-cols-2 gap-2 text-[10px]">{[["Research","Large context"],["Strategy","Deep reasoning"],["Copy","Editorial"],["Creative","Multimodal"]].map(([role,model]) => <div key={role} className="rounded-xl bg-white/8 p-3"><div className="font-black text-white">{role}</div><div className="mt-1 text-slate-400">{model} model</div></div>)}</div></section>
       </aside>
     </div>
   </div>;

@@ -46,3 +46,8 @@ Authenticate Wrangler when prompted. For continuous deployment, connect the GitH
 - GitHub CI workflow
 
 See `docs/BUILD-LOOP.md` and `docs/ROADMAP.md`.
+
+
+## v0.4 focus
+
+Mission Orchestration turns a user outcome into a visible seven-stage executive workflow with live handoffs, progressive deliverables, and task-aware model routing.
